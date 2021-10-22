@@ -50,9 +50,148 @@ mod ray {
 fn ray_color<T: Num>(r: Ray<T>) -> Rgb<T> {
     let unit_vec = Unit::new_normalize(r.direction);
     let t = 0.5*(unit_vec.y + 1.0);
-    (1. - t)*Rgb([1., 1., 1.]) + t*Rgb()
+}
+
+mod vec3 {
+    // lightweight class for vector3 class
+    use num_traits::Float;
+
+    #[derive(Clone, Copy, Debug)]
+    pub struct Vector3<T: Float> {
+        pub x: T,
+        pub y: T,
+        pub z: T,
+    }
+
+    impl<T: Float> Vector3<T> {
+        pub fn new(x: T, y: T, z: T) -> Self {
+            Self { x, y, z }
+        }
+
+        pub fn length_squared(&self) -> T {
+            (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
+        }
+
+        pub fn length(&self) -> T {
+            T::sqrt(self.length_squared())
+        }
+
+        pub fn dot(self, other: Self) -> Self {
+            Self {
+                x: self.x * other.x,
+                y: self.y * other.y,
+                z: self.z * other.z,
+            }
+        }
+
+        pub fn to_unit(self) -> Self {
+            self / self.length()
+        }
+
+        pub fn cross(self, other: Self) -> Self {
+            Self {
+                x: self.y * other.z - self.z * other.y,
+                y: self.z * other.x - self.x * other.y,
+                z: self.x * other.y - self.y * other.x,
+            }
+        }
+    }
+
+    use std::ops;
+    use nalgebra::{ClosedMul, Vector};
+    use std::process::Output;
+
+    // `vec3 + vec3`
+    impl<T: Float> ops::Add for Vector3<T> {
+        type Output = Self;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            Self {
+                x: self.x + rhs.x,
+                y: self.y + rhs.y,
+                z: self.z + rhs.z
+            }
+        }
+    }
+
+    // `vec3 - vec3`
+    impl<T: Float> ops::Sub for Vector3<T> {
+        type Output = Self;
+
+        fn sub(self, rhs: Self) -> Self::Output {
+            Self {
+                x: self.x - rhs.x,
+                y: self.y - rhs.y,
+                z: self.z - rhs.z
+            }
+        }
+    }
+
+    // `vec3 * vec3`
+    impl<T: Float> ops::Mul for Vector3<T> {
+        type Output = Self;
+
+        fn mul(self, rhs: Self) -> Self::Output {
+            Self {
+                x: self.x * rhs.x,
+                y: self.y * rhs.y,
+                z: self.z * rhs.z
+            }
+        }
+    }
+
+    // `vec3 * scalar`
+    impl<T: Float> ops::Mul<T> for Vector3<T> {
+        type Output = Self;
+
+        fn mul(self, rhs: T) -> Self::Output {
+            Self {
+                x: rhs * self.x,
+                y: rhs * self.y,
+                z: rhs * self.z
+            }
+        }
+    }
+
+    // `scalar * vec3`
+    impl<T: Float> ops::Mul<Vector3<T>> for T {
+        type Output = Vector3<T>;
+
+        fn mul(self, rhs: Vector3<T>) -> Self::Output {
+            Self {
+                x: rhs.x * self,
+                y: rhs.y * self,
+                z: rhs.z * self,
+            }
+        }
+    }
+
+    // `-vec3`
+    impl<T: Float> ops::Neg for Vector3<T> {
+        type Output = Self;
+
+        fn neg(self) -> Self::Output {
+            Self { x: -self.x, y: -self.y, z: -self.z }
+        }
+    }
+
+    // `vec3 / scalar`
+    impl<T: Float> ops::Div<T> for Vector3<T> {
+        type Output = Self;
+
+        fn div(self, rhs: T) -> Self::Output {
+            Self {
+                x: self.x / rhs,
+                y: self.y / rhs,
+                z: self.z / rhs
+            }
+        }
+    }
+
+
 }
 fn main() {
+    //https://raytracing.github.io/books/RayTracingInOneWeekend.html
     use ray::Ray;
     use nalgebra::vector;
 
