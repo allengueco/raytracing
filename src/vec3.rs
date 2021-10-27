@@ -27,12 +27,10 @@ impl Vector3 {
         Num::sqrt(self.length_squared())
     }
 
-    pub fn dot(self, other: Self) -> Self {
-        Self {
-            x: self.x * other.x,
-            y: self.y * other.y,
-            z: self.z * other.z,
-        }
+    pub fn dot(self, other: Self) -> Num {
+        self.x * other.x
+            + self.y * other.y
+            + self.z * other.z
     }
 
     pub fn cross(self, other: Self) -> Self {
@@ -150,6 +148,12 @@ impl ops::Div<Num> for Vector3 {
 
     fn div(self, rhs: Num) -> Self::Output {
         (1. / rhs) * self
+    }
+}
+
+impl Default for Vector3 {
+    fn default() -> Self {
+        Self::from_elem(Num::default())
     }
 }
 
