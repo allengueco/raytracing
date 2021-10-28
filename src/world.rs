@@ -1,8 +1,8 @@
 use std::ops::Range;
 
 use crate::hittable::{HitRecord, Hittable};
-use crate::Num;
 use crate::ray::Ray;
+use crate::Num;
 
 pub struct World(pub Vec<Box<dyn Hittable>>);
 
@@ -20,6 +20,10 @@ impl Hittable for World {
             }
         }
 
-        if hit { Some(hit_record) } else { None }
+        if hit {
+            Some(hit_record)
+        } else {
+            None
+        }
     }
 }

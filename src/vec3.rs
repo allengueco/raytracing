@@ -1,7 +1,10 @@
 // lightweight class for vector3 class
 
 use super::Num;
+use rand::distributions::Distribution;
+use rand::{random, Rng};
 use std::ops;
+use std::ops::Range;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector3 {
@@ -28,9 +31,7 @@ impl Vector3 {
     }
 
     pub fn dot(self, other: Self) -> Num {
-        self.x * other.x
-            + self.y * other.y
-            + self.z * other.z
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     pub fn cross(self, other: Self) -> Self {
@@ -43,6 +44,56 @@ impl Vector3 {
 
     pub fn normalize(self) -> Self {
         self / self.length()
+    }
+
+    // `[0, 1)`
+    pub fn random<R: Rng>(rng: &mut R) -> Self {
+        let [x, y, z]: [Num; 3] = rng.gen();
+        Self {
+            x,
+            y,
+            z,
+        }
+    }
+
+    // `[min, max)`
+    pub fn random_range<R: Rng>(range: Range<Num>, rng: &mut R) -> Self {
+        let dist = rand::distributions::Uniform::from(range);
+        Self {
+            x: dist.sample(rng),
+            y: dist.sample(rng),
+            z: dist.sample(rng),
+        }
+    }
+
+    pub fn random_in_unit_sphere<R: Rng>(rng: &mut R) -> Vector3 {
+        loop {
+            let v = Vector3::random_range((-1 as Num)..1., rng);
+            if v.length_squared() < 1. { break v }
+        }
+    }
+
+    pub fn random_in_hemisphere<R: Rng>(normal: Vector3, rng: &mut R) -> Vector3 {
+        let in_unit_sphere = Vector3::random_in_unit_sphere(rng);
+        if in_unit_sphere.dot(normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
+
+    pub fn random_unit_vector<R: Rng>(rng: &mut R) -> Vector3 {
+        Vector3::random_in_unit_sphere(rng).normalize()
+    }
+
+    pub fn near_zero(&self) -> bool {
+        const EPSILON: Num = 1e-8;
+
+        (Num::abs(self.x) < EPSILON) && (Num::abs(self.y) < EPSILON) && (Num::abs(self.z)) < EPSILON
+    }
+
+    pub fn reflect(self, other: Vector3) -> Vector3 {
+        self - 2. * self.dot(other) * other
     }
 }
 

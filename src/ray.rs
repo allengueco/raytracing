@@ -1,7 +1,5 @@
 use crate::vec3::Vector3;
 
-
-
 use super::Num;
 
 #[derive(Clone, Copy)]

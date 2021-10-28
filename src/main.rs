@@ -5,6 +5,8 @@ use std::io;
 use std::io::Write;
 use std::ops::Div;
 
+use rand::Rng;
+
 use crate::camera::{Camera, Viewport};
 use crate::hittable::{HitRecord, Hittable};
 use crate::image::{AspectRatio, Image};
@@ -12,49 +14,64 @@ use crate::ray::Ray;
 use crate::shapes::Sphere;
 use crate::vec3::{Color, Point3, Vector3};
 use crate::world::World;
+use crate::material::Material;
 
-mod ray;
-mod vec3;
 mod camera;
-mod image;
 mod hittable;
-mod shapes;mod world;
+mod image;
+mod material;
+mod ray;
+mod shapes;
+mod vec3;
+mod world;
 
 pub(crate) type Num = f64;
 
 pub(crate) fn write_color<W: io::Write>(writer: &mut W, pixel_color: Color, samples: usize) {
     let scale = 1.0 / samples as Num;
-    let [mut r, mut g, mut b] = [
-        pixel_color.x,
-        pixel_color.y,
-        pixel_color.z
-    ];
-    r *= scale;
-    g *= scale;
-    b *= scale;
+    let [mut r, mut g, mut b] = [pixel_color.x, pixel_color.y, pixel_color.z];
+    r = (scale * r).sqrt();
+    g = (scale * g).sqrt();
+    b = (scale * b).sqrt();
 
-    let r = (255.99 * r).max(0.).min(255.) as u8;
-    let g = (255.99 * g).max(0.).min(255.) as u8;
-    let b = (255.99 * b).max(0.).min(255.) as u8;
+    let ir = (256. * Num::clamp(r,0.,0.9999)) as u8;
+    let ig = (256. * Num::clamp(g,0.,0.9999)) as u8;
+    let ib = (256. * Num::clamp(b,0.,0.9999)) as u8;
 
     writer
-        .write_all(format!("{} {} {}\n", r, g, b).as_ref())
+        .write_all(format!("{} {} {}\n", ir, ig, ib).as_ref())
         .unwrap();
 }
 
-pub(crate) fn ray_color(ray: Ray, world: &World) -> Color {
-    if let Some(rec) = world.hit(ray, 0.0..Num::INFINITY) {
-        return 0.5 * (rec.normal + Color::from_elem(1.));
+pub(crate) fn ray_color<R: Rng>(ray: Ray, world: &World, depth: usize, rng: &mut R) -> Color {
+    if depth <= 0 {
+        return Color::from_elem(0.);
+    }
+    if let Some(rec) = world.hit(ray, 0.001..Num::INFINITY) {
+        let target = rec.p + rec.normal + Vector3::random_in_unit_sphere(rng);
+        // if let Some((attenuation, scattered)) = rec.mat.scatter(ray, rec, rng) {
+        //     return attenuation * ray_color(scattered, world, depth-1, rng);
+        // }
+        // return Color::from_elem(0.)
+        return 0.5 * ray_color(Ray::from(rec.p, target - rec.p), world, depth-1, rng);
     }
 
+    // Blue to white gradient if the ray does not hit anything
     let unit_direction = ray.direction.normalize();
     let t = (unit_direction.y + 1.0) * 0.5;
     (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
 }
 
-pub(crate) fn render(world: &World, image: Image, camera: Camera, samples: usize) -> io::Result<
-    ()> {
+pub(crate) fn render<R: Rng>(
+    world: &World,
+    image: Image,
+    camera: Camera,
+    samples: usize,
+    depth: usize,
+    rng: &mut R,
+) -> io::Result<()> {
     let mut file = File::create("blended.ppm")?;
+    eprintln!("{}x{}", image.width, image.height);
     file.write_all(format!("P3\n{} {}\n255\n", image.width, image.height).as_bytes())?;
 
     for y in (0..image.height).rev() {
@@ -63,11 +80,11 @@ pub(crate) fn render(world: &World, image: Image, camera: Camera, samples: usize
         for x in 0..image.width {
             let mut color = Color::from_elem(0.);
             for _ in 0..samples {
-                let u = (x as Num + rand::random::<Num>()) / (image.width - 1) as Num;
-                let v = (y as Num + rand::random::<Num>()) / (image.height - 1) as Num;
+                let u = (x as Num + rng.gen::<Num>()) / (image.width - 1) as Num;
+                let v = (y as Num + rng.gen::<Num>()) / (image.height - 1) as Num;
                 let r = camera.ray(u, v);
 
-                color += ray_color(r, world);
+                color += ray_color(r, world, depth, rng);
             }
             write_color(&mut file, color, samples);
         }
@@ -81,15 +98,44 @@ fn main() {
     // first(256, 256).unwrap();
 
     const SAMPLES: usize = 100;
+    const MAX_DEPTH: usize = 10;
     let aspect_ratio = AspectRatio(16. / 9.);
     let image = Image::from_width(aspect_ratio, 400);
     let camera = Camera::new(
         Viewport::from_height(aspect_ratio, 2),
-        Point3::new(0., 0., 0.));
-
-    let world = World(vec![
-        Box::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)),
-        Box::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.))]
+        Point3::new(0., 0., 0.),
     );
-    render(&world, image, camera, SAMPLES).unwrap();
+    let mut rng = rand::thread_rng();
+
+
+    let _world = World(vec![
+        Box::new(Sphere::new(
+            Point3::new(0., -100.5, -1.),
+            100.,
+            Material::Lambertian { albedo: Color::new(0.8, 0.8, 0.) })),
+        Box::new(Sphere::new(
+            Point3::new(0., 0., -1.),
+            0.5,
+            Material::Lambertian { albedo: Color::new(0.7, 0.3, 0.3) })),
+
+        Box::new(Sphere::new(
+            Point3::new(-1., 0., -1.),
+            0.5,
+            Material::Metal { albedo: Color::new(0.8, 0.8, 0.8) })),
+        Box::new(Sphere::new(
+            Point3::new(1., 0., -1.),
+            0.5,
+            Material::Metal { albedo: Color::new(0.8, 0.6, 0.2) }))
+    ]);
+    let simple_world = World(vec![
+        Box::new(Sphere::new(
+            Point3::new(0., 0., -1.),
+            0.5,
+            Material::Lambertian { albedo: Color::new(0.8, 0.8, 0.) })),
+        Box::new(Sphere::new(
+            Point3::new(0., -100.5, -1.),
+            100.,
+            Material::Lambertian { albedo: Color::new(0.8, 0.8, 0.) }))
+    ]);
+    render(&simple_world, image, camera, SAMPLES, MAX_DEPTH, &mut rng).unwrap();
 }

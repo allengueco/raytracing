@@ -12,7 +12,7 @@ impl Image {
         Self {
             aspect_ratio,
             width,
-            height: (width as Num / aspect_ratio.0) as usize
+            height: (width as Num / aspect_ratio.0) as usize,
         }
     }
 }
