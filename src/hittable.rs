@@ -1,6 +1,6 @@
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::vec3::{Point3, Vector3, Color};
+use crate::vec3::{Color, Point3, Vector3};
 use crate::Num;
 use std::ops::Range;
 
@@ -19,7 +19,9 @@ impl Default for HitRecord {
             p: Point3::default(),
             normal: Vector3::default(),
             t: Num::default(),
-            mat: Material::Lambertian { albedo: Color::default() },
+            mat: Material::Lambertian {
+                albedo: Color::default(),
+            },
             front_face: false,
         }
     }

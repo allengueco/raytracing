@@ -1,20 +1,24 @@
 use crate::hittable::{HitRecord, Hittable};
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Point3;
 use crate::Num;
 use std::ops::Range;
-use crate::material::Material;
 
 #[derive(Clone, Copy)]
 pub struct Sphere {
     center: Point3,
     radius: Num,
-    mat: Material
+    mat: Material,
 }
 
 impl Sphere {
     pub(crate) fn new(center: Point3, radius: Num, mat: Material) -> Self {
-        Self { center, radius, mat }
+        Self {
+            center,
+            radius,
+            mat,
+        }
     }
 }
 
@@ -36,7 +40,7 @@ impl Hittable for Sphere {
         if !range.contains(&root) {
             root = (-half_b + sqrt_disc) / a;
             if !range.contains(&root) {
-                return None
+                return None;
             }
         }
 

@@ -20,15 +20,14 @@ impl Material {
 
                 let scattered = Ray::from(rec.p, scatter_dir);
                 Some((albedo, scattered))
-            },
+            }
             Material::Metal { albedo } => {
                 let reflected = ray.direction.normalize().reflect(rec.normal);
                 let scattered = Ray::from(rec.p, reflected);
 
                 if scattered.direction.dot(rec.normal) > 0. {
                     Some((albedo, scattered))
-                }
-                else {
+                } else {
                     None
                 }
             }

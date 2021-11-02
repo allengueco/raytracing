@@ -27,7 +27,7 @@ impl Vector3 {
     }
 
     pub fn length(&self) -> Num {
-        Num::sqrt(self.length_squared())
+        self.length_squared().sqrt()
     }
 
     pub fn dot(self, other: Self) -> Num {
@@ -37,7 +37,7 @@ impl Vector3 {
     pub fn cross(self, other: Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
-            y: self.z * other.x - self.x * other.y,
+            y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x,
         }
     }
@@ -46,14 +46,14 @@ impl Vector3 {
         self / self.length()
     }
 
+    pub fn zeros() -> Self {
+        Self::from_elem(0. as Num)
+    }
+
     // `[0, 1)`
     pub fn random<R: Rng>(rng: &mut R) -> Self {
         let [x, y, z]: [Num; 3] = rng.gen();
-        Self {
-            x,
-            y,
-            z,
-        }
+        Self { x, y, z }
     }
 
     // `[min, max)`
@@ -66,15 +66,17 @@ impl Vector3 {
         }
     }
 
-    pub fn random_in_unit_sphere<R: Rng>(rng: &mut R) -> Vector3 {
+    pub fn random_in_unit_sphere<R: Rng>(rng: &mut R) -> Self {
         loop {
-            let v = Vector3::random_range((-1 as Num)..1., rng);
-            if v.length_squared() < 1. { break v }
+            let v = Self::random_range((-1 as Num)..1., rng);
+            if v.length_squared() < 1. {
+                break v;
+            }
         }
     }
 
-    pub fn random_in_hemisphere<R: Rng>(normal: Vector3, rng: &mut R) -> Vector3 {
-        let in_unit_sphere = Vector3::random_in_unit_sphere(rng);
+    pub fn random_in_hemisphere<R: Rng>(normal: Self, rng: &mut R) -> Self {
+        let in_unit_sphere = Self::random_in_unit_sphere(rng);
         if in_unit_sphere.dot(normal) > 0.0 {
             in_unit_sphere
         } else {
@@ -82,17 +84,17 @@ impl Vector3 {
         }
     }
 
-    pub fn random_unit_vector<R: Rng>(rng: &mut R) -> Vector3 {
-        Vector3::random_in_unit_sphere(rng).normalize()
+    pub fn random_unit_vector<R: Rng>(rng: &mut R) -> Self {
+        Self::random_in_unit_sphere(rng).normalize()
     }
 
     pub fn near_zero(&self) -> bool {
         const EPSILON: Num = 1e-8;
 
-        (Num::abs(self.x) < EPSILON) && (Num::abs(self.y) < EPSILON) && (Num::abs(self.z)) < EPSILON
+        (self.x.abs() < EPSILON) && (self.y.abs() < EPSILON) && (self.z.abs()) < EPSILON
     }
 
-    pub fn reflect(self, other: Vector3) -> Vector3 {
+    pub fn reflect(self, other: Self) -> Self {
         self - 2. * self.dot(other) * other
     }
 }
@@ -113,9 +115,17 @@ impl ops::MulAssign for Vector3 {
     }
 }
 
+impl ops::MulAssign<Num> for Vector3 {
+    fn mul_assign(&mut self, rhs: Num) {
+        self.x *= rhs;
+        self.y *= rhs;
+        self.z *= rhs;
+    }
+}
+
 impl ops::DivAssign<Num> for Vector3 {
     fn div_assign(&mut self, rhs: Num) {
-        *self = *self * (1. / rhs)
+        *self *= 1. / rhs
     }
 }
 

@@ -33,7 +33,7 @@ impl Camera {
         self.lower_left_corner
     }
 
-    pub(crate) fn ray(&self, u: Num, v: Num) -> Ray {
+    pub(crate) fn cast_ray(&self, u: Num, v: Num) -> Ray {
         Ray::from(
             self.origin,
             self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
