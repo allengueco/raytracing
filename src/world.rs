@@ -8,22 +8,15 @@ pub struct World(pub Vec<Box<dyn Hittable>>);
 
 impl Hittable for World {
     fn hit(&self, ray: Ray, range: Range<Num>) -> Option<HitRecord> {
-        let mut hit_record: HitRecord = HitRecord::default();
+        let mut hit_record: Option<HitRecord> = None;
         let mut closest = range.end;
-        let mut hit = false;
 
         for h in &self.0 {
-            if let Some(rec) = h.hit(ray, 0.0..closest) {
-                hit = true;
+            if let Some(rec) = h.hit(ray, range.start..closest) {
                 closest = rec.t;
-                hit_record = rec;
+                hit_record = Some(rec);
             }
         }
-
-        if hit {
-            Some(hit_record)
-        } else {
-            None
-        }
+        hit_record
     }
 }

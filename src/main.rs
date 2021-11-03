@@ -35,9 +35,9 @@ pub(crate) fn write_color<W: io::Write>(writer: &mut W, pixel_color: Color, samp
         (pixel_color.z * scale).sqrt(),
     ];
 
-    let ir = (255.99 * r.max(0.0).min(1.0)) as u8;
-    let ig = (255.99 * g.max(0.0).min(1.0)) as u8;
-    let ib = (255.99 * b.max(0.0).min(1.0)) as u8;
+    let ir = (255.99 * r.clamp(0.0,0.99)) as u8;
+    let ig = (255.99 * g.clamp(0.0,0.99)) as u8;
+    let ib = (255.99 * b.clamp(0.0,0.99)) as u8;
 
     writer
         .write_all(format!("{} {} {}\n", ir, ig, ib).as_ref())
@@ -48,13 +48,11 @@ pub(crate) fn ray_color<R: Rng>(ray: Ray, world: &World, depth: usize, rng: &mut
     if depth <= 0 {
         return Color::zeros();
     }
-    if let Some(rec) = world.hit(ray, 0.001..Num::MAX) {
-        let target = rec.p + Vector3::random_in_hemisphere(rec.normal, rng);
-        // if let Some((attenuation, scattered)) = rec.mat.scatter(ray, rec, rng) {
-        //     return attenuation * ray_color(scattered, world, depth-1, rng);
-        // }
-        // return Color::zeros()
-        return 0.5 * ray_color(Ray::from(rec.p, target - rec.p), world, depth - 1, rng);
+    if let Some(rec) = world.hit(ray, 0.01..Num::MAX) {
+        if let Some((attenuation, scattered)) = rec.mat.scatter(ray, rec, rng) {
+            return attenuation * ray_color(scattered, world, depth-1, rng);
+        }
+        return Color::zeros();
     }
 
     // Blue to white gradient if the ray does not hit anything
