@@ -6,6 +6,12 @@ use crate::Num;
 
 pub struct World(pub Vec<Box<dyn Hittable>>);
 
+impl World {
+    pub fn add(&mut self, object: Box<dyn Hittable>) {
+        self.0.push(object)
+    }
+}
+
 impl Hittable for World {
     fn hit(&self, ray: Ray, range: Range<Num>) -> Option<HitRecord> {
         let mut hit_record: Option<HitRecord> = None;
