@@ -10,7 +10,7 @@ pub struct HitRecord {
     pub normal: Vector3,
     pub t: Num,
     pub mat: Material,
-    front_face: bool,
+    pub front_face: bool,
 }
 
 impl Default for HitRecord {

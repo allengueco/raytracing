@@ -35,9 +35,9 @@ pub(crate) fn write_color<W: io::Write>(writer: &mut W, pixel_color: Color, samp
         (pixel_color.z * scale).sqrt(),
     ];
 
-    let ir = (255.99 * r.clamp(0.0,0.99)) as u8;
-    let ig = (255.99 * g.clamp(0.0,0.99)) as u8;
-    let ib = (255.99 * b.clamp(0.0,0.99)) as u8;
+    let ir = (255.99 * r.clamp(0.0, 0.99)) as u8;
+    let ig = (255.99 * g.clamp(0.0, 0.99)) as u8;
+    let ib = (255.99 * b.clamp(0.0, 0.99)) as u8;
 
     writer
         .write_all(format!("{} {} {}\n", ir, ig, ib).as_ref())
@@ -48,9 +48,9 @@ pub(crate) fn ray_color<R: Rng>(ray: Ray, world: &World, depth: usize, rng: &mut
     if depth <= 0 {
         return Color::zeros();
     }
-    if let Some(rec) = world.hit(ray, 0.01..Num::MAX) {
+    if let Some(rec) = world.hit(ray, 0.0001..Num::MAX) {
         if let Some((attenuation, scattered)) = rec.mat.scatter(ray, rec, rng) {
-            return attenuation * ray_color(scattered, world, depth-1, rng);
+            return attenuation * ray_color(scattered, world, depth - 1, rng);
         }
         return Color::zeros();
     }
@@ -100,13 +100,11 @@ fn main() {
     const MAX_DEPTH: usize = 10;
     let aspect_ratio = AspectRatio(16. / 9.);
     let image = Image::from_width(aspect_ratio, 400);
-    let camera = Camera::new(
-        Viewport::from_height(aspect_ratio, 2),
-        Point3::zeros()
-    );
+    let camera = Camera::new(Viewport::from_height(aspect_ratio, 2), Point3::zeros());
     let mut rng = rand::thread_rng();
 
     let world = World(vec![
+        // Ground
         Box::new(Sphere::new(
             Point3::new(0., -100.5, -1.),
             100.,
@@ -114,41 +112,33 @@ fn main() {
                 albedo: Color::new(0.8, 0.8, 0.),
             },
         )),
+        //Left
+        Box::new(Sphere::new(
+            Point3::new(-1., 0., -1.),
+            0.5,
+            Material::Dielectric { ir: 1.5 },
+        )),
+        // Inner left
+        Box::new(Sphere::new(
+            Point3::new(-1., 0., -1.),
+            -0.4,
+            Material::Dielectric { ir: 1.5 },
+        )),
+        // Center
         Box::new(Sphere::new(
             Point3::new(0., 0., -1.),
             0.5,
             Material::Lambertian {
-                albedo: Color::new(0.7, 0.3, 0.3),
+                albedo: Color::new(0.1, 0.2, 0.5),
             },
         )),
-        Box::new(Sphere::new(
-            Point3::new(-1., 0., -1.),
-            0.5,
-            Material::Metal {
-                albedo: Color::new(0.8, 0.8, 0.8),
-            },
-        )),
+        //Right
         Box::new(Sphere::new(
             Point3::new(1., 0., -1.),
             0.5,
             Material::Metal {
                 albedo: Color::new(0.8, 0.6, 0.2),
-            },
-        )),
-    ]);
-    let _simple_world = World(vec![
-        Box::new(Sphere::new(
-            Point3::new(0., 0., -1.),
-            0.5,
-            Material::Lambertian {
-                albedo: Color::new(0.8, 0.8, 0.),
-            },
-        )),
-        Box::new(Sphere::new(
-            Point3::new(0., -100.5, -1.),
-            100.,
-            Material::Lambertian {
-                albedo: Color::new(0.8, 0.8, 0.),
+                fuzz: 0.0,
             },
         )),
     ]);

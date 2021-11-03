@@ -65,9 +65,9 @@ impl Vector3 {
     }
 
     pub fn random_in_unit_sphere<R: Rng>(rng: &mut R) -> Self {
-        let mut v = Self::random_double(-1. .. 1., rng);
+        let mut v = Self::random_double(-1. ..1., rng);
         while v.length_squared() >= 1. {
-            v = Self::random_double(-1. .. 1., rng);
+            v = Self::random_double(-1. ..1., rng);
         }
         v
     }
@@ -93,6 +93,13 @@ impl Vector3 {
 
     pub fn reflect(self, other: Self) -> Self {
         self - 2. * self.dot(other) * other
+    }
+
+    pub fn refract(self, other: Self, etai_over_etat: Num) -> Self {
+        let cos_theta = (-self).dot(other).min(1.0);
+        let r_out_perp = etai_over_etat * (self + cos_theta * other);
+        let r_out_parallel = -((1.0 - r_out_perp.length_squared()).abs()).sqrt() * other;
+        return r_out_perp + r_out_parallel;
     }
 }
 
