@@ -106,7 +106,7 @@ fn main() {
     );
     let mut rng = rand::thread_rng();
 
-    let _world = World(vec![
+    let world = World(vec![
         Box::new(Sphere::new(
             Point3::new(0., -100.5, -1.),
             100.,
@@ -136,7 +136,7 @@ fn main() {
             },
         )),
     ]);
-    let simple_world = World(vec![
+    let _simple_world = World(vec![
         Box::new(Sphere::new(
             Point3::new(0., 0., -1.),
             0.5,
@@ -152,5 +152,5 @@ fn main() {
             },
         )),
     ]);
-    render(&simple_world, image, camera, SAMPLES, MAX_DEPTH, &mut rng).unwrap();
+    render(&world, image, camera, SAMPLES, MAX_DEPTH, &mut rng).unwrap();
 }

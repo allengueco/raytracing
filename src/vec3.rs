@@ -56,23 +56,20 @@ impl Vector3 {
         Self { x, y, z }
     }
 
-    // `[min, max)`
-    pub fn random_range<R: Rng>(range: Range<Num>, rng: &mut R) -> Self {
-        let dist = rand::distributions::Uniform::from(range);
+    pub fn random_double<R: Rng>(range: Range<Num>, rng: &mut R) -> Self {
         Self {
-            x: dist.sample(rng),
-            y: dist.sample(rng),
-            z: dist.sample(rng),
+            x: rng.gen_range(range.clone()),
+            y: rng.gen_range(range.clone()),
+            z: rng.gen_range(range.clone()),
         }
     }
 
     pub fn random_in_unit_sphere<R: Rng>(rng: &mut R) -> Self {
-        loop {
-            let v = Self::random_range((-1 as Num)..1., rng);
-            if v.length_squared() < 1. {
-                break v;
-            }
+        let mut v = Self::random_double(-1. .. 1., rng);
+        while v.length_squared() >= 1. {
+            v = Self::random_double(-1. .. 1., rng);
         }
+        v
     }
 
     pub fn random_in_hemisphere<R: Rng>(normal: Self, rng: &mut R) -> Self {
