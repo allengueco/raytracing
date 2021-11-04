@@ -5,7 +5,7 @@ use std::io;
 use std::io::Write;
 use std::ops::Div;
 
-use rand::{Rng, SeedableRng, random};
+use rand::{random, Rng, SeedableRng};
 use rayon::prelude::*;
 
 use crate::camera::{Camera, Viewport};
@@ -42,8 +42,6 @@ pub fn translate_color(pixel_color: Color, samples: usize) -> [u8; 3] {
 
     [ir, ig, ib]
 }
-
-
 
 pub(crate) fn write_color<W: io::Write>(writer: &mut W, pixel_color: Color, samples: usize) {
     let scale = 1.0 / (samples as Num);
@@ -97,20 +95,18 @@ pub(crate) fn render(
         .rev()
         .enumerate()
         .for_each(|(j, slice)| {
-            slice.into_par_iter()
-                .enumerate()
-                .for_each(|(i, pixel)| {
-                    for _ in 0..samples {
-                        let u = (i as Num + random::<Num>()) / (image.width - 1) as Num;
-                        let v = (j as Num + random::<Num>()) / (image.height - 1) as Num;
-                        let r = camera.cast_ray(u, v);
-                        *pixel += ray_color(r, world, depth);
-                    }
-                })
+            slice.into_par_iter().enumerate().for_each(|(i, pixel)| {
+                for _ in 0..samples {
+                    let u = (i as Num + random::<Num>()) / (image.width - 1) as Num;
+                    let v = (j as Num + random::<Num>()) / (image.height - 1) as Num;
+                    let r = camera.cast_ray(u, v);
+                    *pixel += ray_color(r, world, depth);
+                }
+            })
         });
 
     for c in im {
-        let [r,g,b] = translate_color(c, samples);
+        let [r, g, b] = translate_color(c, samples);
         file.write_fmt(format_args!("{} {} {}\n", r, g, b))?;
     }
     eprintln!("\nDone\n");
@@ -128,6 +124,7 @@ fn main() {
         Point3::new(0., 0., 0.),
         Vector3::new(0., 1., 0.),
         20.0,
+        0.0 .. 0.001
     );
     let mut rng = rand::rngs::StdRng::seed_from_u64(0xFACE);
 
