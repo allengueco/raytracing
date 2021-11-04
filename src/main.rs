@@ -6,6 +6,7 @@ use std::io::Write;
 use std::ops::Div;
 
 use rand::Rng;
+use rayon::prelude::*;
 
 use crate::camera::{Camera, Viewport};
 use crate::hittable::{HitRecord, Hittable};
@@ -69,7 +70,7 @@ pub(crate) fn render<R: Rng>(
     depth: usize,
     rng: &mut R,
 ) -> io::Result<()> {
-    let mut file = File::create("blended.ppm")?;
+    let mut file = File::create("final_scene.ppm")?;
     eprintln!("{}x{}", image.width, image.height);
     file.write_all(format!("P3\n{} {}\n255\n", image.width, image.height).as_bytes())?;
 
@@ -212,11 +213,11 @@ fn final_scene<R: Rng>(rng: &mut R) -> World {
         },
     )));
     world.add(Box::new(Sphere::new(
-        Point3::new(0.7, 0.6, 0.5),
+        Point3::new(4., 1., 0.),
         1.,
         Material::Metal {
-            albedo: Color::new(4., 1., 0.),
-            fuzz: 1.0,
+            albedo: Color::new(0.7, 0.6, 0.5),
+            fuzz: 0.0,
         },
     )));
 
