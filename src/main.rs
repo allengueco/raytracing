@@ -120,9 +120,9 @@ pub(crate) fn render(
 fn main() {
     //https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
-    const SAMPLES: usize = 100;
+    const SAMPLES: usize = 500;
     const MAX_DEPTH: usize = 50;
-    let image = Image::from_width(Camera::ASPECT_RATIO, 400);
+    let image = Image::from_width(Camera::ASPECT_RATIO, 1200);
     let camera = Camera::new(
         Point3::new(13., 2., 3.),
         Point3::new(0., 0., 0.),
